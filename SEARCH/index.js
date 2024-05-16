@@ -6,11 +6,20 @@ import cheerio from 'cheerio';
 const app = express();
 const PORT = 3000;
 
-// Lire le fichier JSON
-const jsonFilePath = path.join(path.resolve(), '../Data/1.json');
-const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'));
+// Define the path to the JSON file
+const jsonFilePath = path.join(path.resolve(), '../Data/2.json');
 
-// Indexer les données
+// Read and parse the JSON file
+let jsonData;
+try {
+    const fileContent = fs.readFileSync(jsonFilePath, 'utf-8');
+    jsonData = JSON.parse(fileContent);
+} catch (error) {
+    console.error('Error reading or parsing the JSON file:', error);
+    process.exit(1);
+}
+
+// Index the data
 const searchIndex = {};
 for (const [url, data] of Object.entries(jsonData)) {
     searchIndex[url] = {
@@ -19,30 +28,32 @@ for (const [url, data] of Object.entries(jsonData)) {
     };
 }
 
-// Fonction de recherche
+// Function to split text into sentences
+function splitIntoSentences(text) {
+    const sentenceRegex = /[^.!?]+[.!?]/g;
+    return text.match(sentenceRegex) || [];
+}
+
+// Search function
 function search(query) {
     const results = [];
-    const maxContentLength = 100; // Définir la longueur maximale du contenu à renvoyer
 
     for (const [url, data] of Object.entries(searchIndex)) {
-        if (data.content.includes(query)) {
-            const $ = cheerio.load(data.content);
-            const textContent = $('body').text(); // Extraire le texte du corps de la page
-            const startIndex = textContent.indexOf(query);
-            let snippet = textContent.substring(startIndex, startIndex + maxContentLength);
-            if (startIndex > 0) {
-                snippet = '...' + snippet; // Ajouter des points de suspension s'il y a du contenu avant
+        const $ = cheerio.load(data.content);
+        const textContent = $('body').text();
+        const sentences = splitIntoSentences(textContent);
+
+        for (const sentence of sentences) {
+            if (sentence.includes(query)) {
+                results.push({ url, snippet: sentence.trim() });
+                break; // Stop after finding the first matching sentence in this document
             }
-            if (startIndex + maxContentLength < textContent.length) {
-                snippet += '...'; // Ajouter des points de suspension s'il y a du contenu après
-            }
-            results.push({ url, snippet });
         }
     }
     return results;
 }
 
-// Route de recherche
+// Search route
 app.get('/search', (req, res) => {
     const query = req.query.q;
     if (!query) {
@@ -53,6 +64,7 @@ app.get('/search', (req, res) => {
     res.send(results);
 });
 
+// Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
