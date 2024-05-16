@@ -6,20 +6,20 @@ import cheerio from 'cheerio';
 const app = express();
 const PORT = 3000;
 
-// Define the path to the JSON file
+// Définir le chemin vers le fichier JSON
 const jsonFilePath = path.join(path.resolve(), '../Data/2.json');
 
-// Read and parse the JSON file
+// Lire et analyser le fichier JSON
 let jsonData;
 try {
     const fileContent = fs.readFileSync(jsonFilePath, 'utf-8');
     jsonData = JSON.parse(fileContent);
 } catch (error) {
-    console.error('Error reading or parsing the JSON file:', error);
+    console.error("Erreur lors de la lecture ou de l'analyse du fichier JSON :", error);
     process.exit(1);
 }
 
-// Index the data
+// Indexer les données
 const searchIndex = {};
 for (const [url, data] of Object.entries(jsonData)) {
     searchIndex[url] = {
@@ -28,15 +28,16 @@ for (const [url, data] of Object.entries(jsonData)) {
     };
 }
 
-// Function to split text into sentences
+// Fonction pour diviser le texte en phrases
 function splitIntoSentences(text) {
     const sentenceRegex = /[^.!?]+[.!?]/g;
     return text.match(sentenceRegex) || [];
 }
 
-// Search function
+// Fonction de recherche
 function search(query) {
     const results = [];
+    const lowerCaseQuery = query.toLowerCase();
 
     for (const [url, data] of Object.entries(searchIndex)) {
         const $ = cheerio.load(data.content);
@@ -44,27 +45,27 @@ function search(query) {
         const sentences = splitIntoSentences(textContent);
 
         for (const sentence of sentences) {
-            if (sentence.includes(query)) {
+            if (sentence.toLowerCase().includes(lowerCaseQuery)) {
                 results.push({ url, snippet: sentence.trim() });
-                break; // Stop after finding the first matching sentence in this document
+                break; // Arrêter après avoir trouvé la première phrase correspondante dans ce document
             }
         }
     }
     return results;
 }
 
-// Search route
+// Route de recherche
 app.get('/search', (req, res) => {
     const query = req.query.q;
     if (!query) {
-        return res.status(400).send({ error: 'Query parameter "q" is required' });
+        return res.status(400).send({ error: 'Le paramètre de requête "q" est requis' });
     }
 
     const results = search(query);
     res.send(results);
 });
 
-// Start the server
+// Démarrer le serveur
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Le serveur fonctionne sur http://localhost:${PORT}`);
 });
