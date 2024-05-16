@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import express from 'express';
 import cheerio from 'cheerio';
+import cors from 'cors';
 
 const app = express();
 const PORT = 3000;
@@ -54,6 +55,7 @@ function search(query) {
     return results;
 }
 
+app.use(cors());
 // Route de recherche
 app.get('/search', (req, res) => {
     const query = req.query.q;

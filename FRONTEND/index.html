@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moteur de Recherche Révolutionnaire</title>
+    <!-- Material UI Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .search-box {
+            background: #ffffff;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease-in-out;
+        }
+        .search-box:hover {
+            transform: scale(1.05);
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.875rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            transition: border-color 0.3s;
+        }
+        .search-input:focus {
+            border-color: #3182ce;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+        }
+        .search-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background-color 0.3s;
+        }
+        .search-button:hover {
+            opacity: 0.9;
+        }
+        .search-button .material-icons {
+            margin-right: 0.5rem;
+        }
+        .results-container {
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 600px;
+        }
+        .result-item {
+            background: #ffffff;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+        .result-item a {
+            text-decoration: none;
+            color: #3182ce;
+            font-weight: bold;
+        }
+        .result-item p {
+            margin: 0.5rem 0 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container" id="search-container">
+        <div class="search-box">
+            <h1 class="text-center mb-4 text-2xl font-bold text-gray-700">Recherche Révolutionnaire</h1>
+            <form id="search-form">
+                <div class="form-group">
+                    <input type="text" class="search-input" id="search-input" placeholder="Entrez votre recherche..." required>
+                </div>
+                <button type="submit" class="search-button" id="search-button">
+                    <span class="material-icons">search</span>
+                    Rechercher
+                </button>
+            </form>
+        </div>
+        <div class="results-container" id="results-container"></div>
+    </div>
+
+    <!-- Bootstrap JS (optional) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- JavaScript for random background gradient and fetch API -->
+    <script>
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function setRandomGradient() {
+            const color1 = getRandomColor();
+            const color2 = getRandomColor();
+            const gradient = `linear-gradient(135deg, ${color1}, ${color2})`;
+            document.getElementById('search-container').style.background = gradient;
+            document.getElementById('search-button').style.background = gradient;
+        }
+
+        async function fetchSearchResults(term) {
+            try {
+                const response = await fetch(`http://localhost:3000/search?q=${term}`);
+                console.log('API response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const results = await response.json();
+                console.log('API results:', results);
+                return results;
+            } catch (error) {
+                console.error('Error fetching search results:', error);
+                return [];
+            }
+        }
+
+        function displayResults(results) {
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.innerHTML = '';
+            results.forEach(result => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                resultItem.innerHTML = `
+                    <a href="${result.url}" target="_blank">${result.url}</a>
+                    <p>${result.snippet}</p>
+                `;
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+
+        document.getElementById('search-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const searchInput = document.getElementById('search-input').value;
+            console.log('Search term:', searchInput);
+            const results = await fetchSearchResults(searchInput);
+            displayResults(results);
+        });
+
+        window.onload = setRandomGradient;
+    </script>
+</body>
+</html>
