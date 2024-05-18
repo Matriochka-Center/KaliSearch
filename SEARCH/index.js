@@ -2,9 +2,12 @@ import express from 'express';
 import cheerio from 'cheerio';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import dotenv from 'dotenv'
+
+dotenv.config();
 
 const app = express();
-const PORT = 3002;
+const {PORT} = process.env || 3002;
 const MONGO_URI = 'mongodb+srv://kalisearch:12RJKw75ElO8dTUd@cluster0.z8zdf0m.mongodb.net/kali_search';
 
 // Connexion à MongoDB
@@ -68,7 +71,7 @@ app.use(cors());
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) {
-        return res.status(400).send({ error: 'Le paramètre de requête "q" est requis' });
+        return res.status(400).send({ error: 'Le champ de recherche ne doit pas etre vide' });
     }
 
     try {
@@ -81,5 +84,5 @@ app.get('/search', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Serveur démarré sur le port ${PORT}`);
+    console.log(`Serveur démarré sur le http://localhost:${PORT}`);
 });
