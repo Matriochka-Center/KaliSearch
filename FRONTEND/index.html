@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,10 +11,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- font style  -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Maven+Pro:wght@400..900&display=swap" rel="stylesheet">
     <style>
         /* Custom styles */
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family:  "Maven Pro", 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
             height: 100vh;
@@ -21,6 +26,7 @@
             flex-direction: column;
             background: linear-gradient(135deg, #ff7e5f, #feb47b);
         }
+
         .search-container {
             display: flex;
             flex-direction: column;
@@ -29,6 +35,7 @@
             padding: 1rem 0;
             background: inherit;
         }
+
         .search-box {
             background: #ffffff;
             padding: 2.5rem;
@@ -36,9 +43,11 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
             transition: transform 0.3s ease-in-out;
         }
+
         .search-box:hover {
             transform: scale(1.05);
         }
+
         .search-input {
             width: 100%;
             padding: 0.875rem;
@@ -46,11 +55,13 @@
             border-radius: 0.5rem;
             transition: border-color 0.3s;
         }
+
         .search-input:focus {
             border-color: #3182ce;
             outline: none;
             box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
         }
+
         .search-button {
             display: flex;
             align-items: center;
@@ -63,17 +74,21 @@
             margin-top: 1rem;
             transition: background-color 0.3s;
         }
+
         .search-button:hover {
             opacity: 0.9;
         }
+
         .search-button .material-icons {
             margin-right: 0.5rem;
         }
+
         .results-container {
             width: 100%;
             max-width: 600px;
             margin: 2rem auto 0 auto;
         }
+
         .result-item {
             background: #ffffff;
             padding: 1rem;
@@ -81,23 +96,27 @@
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 1rem;
         }
+
         .result-item a {
             text-decoration: none;
             color: #3182ce;
             font-weight: bold;
         }
+
         .result-item p {
             margin: 0.5rem 0 0 0;
         }
     </style>
 </head>
+
 <body style="background: linear-gradient(135deg, rgb(29, 86, 87), rgb(192, 244, 153));">
     <div class="search-container" id="search-container">
         <div class="search-box" id="search-box">
             <h1 class="text-center mb-4 text-2xl font-bold text-gray-700">KALISEARCH Recherche Révolutionnaire</h1>
             <form id="search-form">
                 <div class="form-group">
-                    <input type="text" class="search-input" id="search-input" placeholder="Entrez votre recherche..." required>
+                    <input type="text" class="search-input" id="search-input" placeholder="Entrez votre recherche..."
+                        required>
                 </div>
                 <button type="submit" class="search-button" id="search-button">
                     <span class="material-icons">search</span>
@@ -135,7 +154,7 @@
 
         async function fetchSearchResults(term) {
             try {
-                const response = await fetch(`http://localhost:3000/search?q=${term}`);
+                const response = await fetch(`http://localhost:3002/search?q=${term}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
@@ -161,7 +180,7 @@
             });
         }
 
-        document.getElementById('search-form').addEventListener('submit', async function(event) {
+        document.getElementById('search-form').addEventListener('submit', async function (event) {
             event.preventDefault();
             const searchInput = document.getElementById('search-input').value;
             const results = await fetchSearchResults(searchInput);
@@ -171,4 +190,5 @@
         window.onload = setRandomGradient;
     </script>
 </body>
+
 </html>

@@ -1,33 +1,29 @@
-import fs from 'fs';
-import path from 'path';
 import express from 'express';
 import cheerio from 'cheerio';
 import cors from 'cors';
+import mongoose from 'mongoose';
 
 const app = express();
-const PORT = 3000;
+const PORT = 3002;
+const MONGO_URI = 'mongodb+srv://kalisearch:12RJKw75ElO8dTUd@cluster0.z8zdf0m.mongodb.net/kali_search';
 
-// Définir le chemin vers le fichier JSON
-const jsonFilePath = path.join(path.resolve(), '../Data/2.json');
+// Connexion à MongoDB
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
-// Lire et analyser le fichier JSON
-let jsonData;
-try {
-    const fileContent = fs.readFileSync(jsonFilePath, 'utf-8');
-    jsonData = JSON.parse(fileContent);
-} catch (error) {
-    console.error("Erreur lors de la lecture ou de l'analyse du fichier JSON :", error);
-    process.exit(1);
-}
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'Erreur de connexion à MongoDB:'));
+db.once('open', () => {
+    console.log("Connecté à MongoDB");
+});
 
-// Indexer les données
-const searchIndex = {};
-for (const [url, data] of Object.entries(jsonData)) {
-    searchIndex[url] = {
-        content: data.content,
-        links: data.links
-    };
-}
+// Définir le schéma et le modèle pour les documents
+const documentSchema = new mongoose.Schema({
+    url: String,
+    content: String,
+    links: Array
+});
+
+const Document = mongoose.model('Document', documentSchema, 'web_data');
 
 // Fonction pour diviser le texte en phrases
 function splitIntoSentences(text) {
@@ -36,38 +32,54 @@ function splitIntoSentences(text) {
 }
 
 // Fonction de recherche
-function search(query) {
+async function search(query) {
     const results = [];
     const lowerCaseQuery = query.toLowerCase();
 
-    for (const [url, data] of Object.entries(searchIndex)) {
-        const $ = cheerio.load(data.content);
-        const textContent = $('body').text();
-        const sentences = splitIntoSentences(textContent);
+    console.log(`Recherche pour : ${query}`);
 
-        for (const sentence of sentences) {
-            if (sentence.toLowerCase().includes(lowerCaseQuery)) {
-                results.push({ url, snippet: sentence.trim() });
-                break; // Arrêter après avoir trouvé la première phrase correspondante dans ce document
+    try {
+        const docs = await Document.find();
+
+        docs.forEach(doc => {
+            const $ = cheerio.load(doc.content);
+            const textContent = $('body').text();
+            const sentences = splitIntoSentences(textContent);
+
+            for (const sentence of sentences) {
+                if (sentence.toLowerCase().includes(lowerCaseQuery)) {
+                    results.push({ url: doc.url, snippet: sentence.trim() });
+                    break; // Arrêter après avoir trouvé la première phrase correspondante dans ce document
+                }
             }
-        }
+        });
+
+        console.log(`Résultats trouvés : ${results.length}`);
+        return results;
+    } catch (error) {
+        console.error("Erreur lors de la recherche :", error);
+        throw error; // Propager l'erreur pour qu'elle soit gérée par le bloc `catch` de la route de recherche
     }
-    return results;
 }
 
 app.use(cors());
+
 // Route de recherche
-app.get('/search', (req, res) => {
+app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) {
         return res.status(400).send({ error: 'Le paramètre de requête "q" est requis' });
     }
 
-    const results = search(query);
-    res.send(results);
+    try {
+        const results = await search(query);
+        res.send(results);
+    } catch (error) {
+        console.error("Erreur lors de la recherche :", error);
+        res.status(500).send({ error: 'Erreur interne du serveur' });
+    }
 });
 
-// Démarrer le serveur
 app.listen(PORT, () => {
-    console.log(`Le serveur fonctionne sur http://localhost:${PORT}`);
+    console.log(`Serveur démarré sur le port ${PORT}`);
 });
