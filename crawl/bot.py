@@ -3,9 +3,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from collections import deque
 import time
-import json
 import mimetypes
 import os
+from pymongo import MongoClient
 
 class SimpleWebCrawler:
     def __init__(self, base_url):
@@ -13,6 +13,14 @@ class SimpleWebCrawler:
         self.visited_urls = set()
         self.url_queue = deque([base_url])
         self.data = {}  # Dictionnaire pour stocker les URLs, leurs liens et contenus
+
+        # Configurer la connexion à MongoDB
+        self.client = MongoClient("mongodb+srv://kalisearch:12RJKw75ElO8dTUd@cluster0.z8zdf0m.mongodb.net/")
+        self.db = self.client['kali_search']  # Nom de la base de données
+        self.collection = self.db['web_data']  # Nom de la collection
+
+        # Test de connexion MongoDB
+        self.collection.insert_one({'test': 'Connexion établie'})
 
     def fetch_page(self, url):
         try:
@@ -32,6 +40,12 @@ class SimpleWebCrawler:
                 links.add(full_url)
         return links
 
+    def extract_text(self, html):
+        soup = BeautifulSoup(html, 'html.parser')
+        # Extraire tout le texte visible et le retourner sous forme de lignes
+        texts = soup.stripped_strings
+        return "\n".join(texts)
+
     def crawl(self):
         while self.url_queue:
             current_url = self.url_queue.popleft()
@@ -48,26 +62,27 @@ class SimpleWebCrawler:
                             file_name = os.path.basename(urlparse(current_url).path)
                             content = file_name
                         else:
-                            content = html
+                            content = self.extract_text(html)
                     else:
-                        content = html
+                        content = self.extract_text(html)
+
+                    # Stocker les liens et le contenu de la page dans MongoDB
+                    try:
+                        self.collection.insert_one({
+                            'url': current_url,
+                            'links': list(links),
+                            'content': content
+                        })
+                        print(f"Document inséré pour {current_url}")
+                    except Exception as e:
+                        print(f"Échec de l'insertion dans MongoDB pour {current_url}: {e}")
                     
-                    # Stocker les liens et le contenu de la page
-                    self.data[current_url] = {
-                        'links': list(links),
-                        'content': content
-                    }
                     for link in links:
                         if link not in self.visited_urls:
                             self.url_queue.append(link)
                 time.sleep(1)  # Être poli et éviter de surcharger le serveur
 
-    def save_to_json(self, filename):
-        with open(filename, 'w') as f:
-            json.dump(self.data, f, indent=4)
-
 if __name__ == "__main__":
-    base_url = "https://asrasbl.org/"
+    base_url = "https://caritasdegoma.org/"
     crawler = SimpleWebCrawler(base_url)
     crawler.crawl()
-    crawler.save_to_json('1.json')
