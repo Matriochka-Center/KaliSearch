@@ -40,7 +40,7 @@ async function search(query) {
     const lowerCaseQuery = query.toLowerCase();
 
     console.log(`Recherche pour : ${query}`);
-
+    
     try {
         const docs = await Document.find();
 
