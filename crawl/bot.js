@@ -49,12 +49,23 @@ class SimpleWebCrawler {
             let href = $(element).attr('href');
             if (!href.includes('#')) {  // Filtrer les liens avec des fragments
                 const fullUrl = new URL(href, baseUrl).href;
-                if (this.baseUrls.some(base => fullUrl.startsWith(base))) {
-                    links.add(fullUrl);
-                }
+                links.add(fullUrl);  // Ajouter tous les liens, internes et externes
             }
         });
         return links;
+    }
+
+    containsSignificantJavaScript(html) {
+        const $ = cheerio.load(html);
+        let containsJavaScript = false;
+        $('script').each((index, element) => {
+            const scriptContent = $(element).html();
+            if (scriptContent && /window\.location|document\.cookie|setTimeout|setInterval|fetch|XMLHttpRequest/.test(scriptContent)) {
+                containsJavaScript = true;
+                return false; // arrêter la boucle
+            }
+        });
+        return containsJavaScript;
     }
 
     extractText(html) {
@@ -69,6 +80,11 @@ class SimpleWebCrawler {
                 console.log(`Visite de : ${currentUrl}`);
                 const { data, contentType } = await this.fetchPage(currentUrl);
                 if (data) {
+                    if (this.containsSignificantJavaScript(data)) {
+                        console.log(`Ignoré ${currentUrl} en raison du contenu JavaScript significatif.`);
+                        continue;
+                    }
+
                     this.visitedUrls.add(currentUrl);
                     const links = this.parseLinks(data, currentUrl);
                     let content;
@@ -120,9 +136,10 @@ class SimpleWebCrawler {
 
 (async () => {
     const baseUrls = [
-        "https://elttec-africa.com/",
+        "https://coinkivu.com/",
         "https://www.kadea.academy/",
-        "https://goma-innovation.com/"
+        "https://goma-innovation.com/",
+        "https://asrasbl.org/",
     ];
     const crawler = new SimpleWebCrawler(baseUrls);
     await crawler.init();
