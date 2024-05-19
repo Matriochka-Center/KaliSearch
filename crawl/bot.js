@@ -9,6 +9,7 @@ class SimpleWebCrawler {
     constructor(baseUrls) {
         this.baseUrls = baseUrls;
         this.visitedUrls = new Set();
+        this.failedUrls = new Set(); // Ensemble pour stocker les URLs qui ont échoué
         this.urlQueue = [...baseUrls];
 
         // Configurer la connexion à MongoDB
@@ -76,7 +77,7 @@ class SimpleWebCrawler {
     async crawl() {
         while (this.urlQueue.length > 0) {
             const currentUrl = this.urlQueue.shift();
-            if (!this.visitedUrls.has(currentUrl)) {
+            if (!this.visitedUrls.has(currentUrl) && !this.failedUrls.has(currentUrl)) {
                 console.log(`Visite de : ${currentUrl}`);
                 const { data, contentType } = await this.fetchPage(currentUrl);
                 if (data) {
@@ -123,10 +124,13 @@ class SimpleWebCrawler {
                     }
 
                     links.forEach(link => {
-                        if (!this.visitedUrls.has(link)) {
+                        if (!this.visitedUrls.has(link) && !this.failedUrls.has(link)) {
                             this.urlQueue.push(link);
                         }
                     });
+                } else {
+                    // Si la récupération échoue, ajouter l'URL à l'ensemble des échecs
+                    this.failedUrls.add(currentUrl);
                 }
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Être poli et éviter de surcharger le serveur
             }
