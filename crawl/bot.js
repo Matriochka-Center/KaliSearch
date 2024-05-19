@@ -46,9 +46,12 @@ class SimpleWebCrawler {
         const $ = cheerio.load(html);
         const links = new Set();
         $('a[href]').each((index, element) => {
-            const fullUrl = new URL($(element).attr('href'), baseUrl).href;
-            if (this.baseUrls.some(base => fullUrl.startsWith(base))) {
-                links.add(fullUrl);
+            let href = $(element).attr('href');
+            if (!href.includes('#')) {  // Filtrer les liens avec des fragments
+                const fullUrl = new URL(href, baseUrl).href;
+                if (this.baseUrls.some(base => fullUrl.startsWith(base))) {
+                    links.add(fullUrl);
+                }
             }
         });
         return links;
