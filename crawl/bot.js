@@ -6,10 +6,10 @@ import mime from 'mime-types';
 import path from 'path';
 
 class SimpleWebCrawler {
-    constructor(baseUrl) {
-        this.baseUrl = baseUrl;
+    constructor(baseUrls) {
+        this.baseUrls = baseUrls;
         this.visitedUrls = new Set();
-        this.urlQueue = [baseUrl];
+        this.urlQueue = [...baseUrls];
 
         // Configurer la connexion à MongoDB
         const uri = "mongodb+srv://kalisearch:12RJKw75ElO8dTUd@cluster0.z8zdf0m.mongodb.net/";
@@ -47,7 +47,7 @@ class SimpleWebCrawler {
         const links = new Set();
         $('a[href]').each((index, element) => {
             const fullUrl = new URL($(element).attr('href'), baseUrl).href;
-            if (fullUrl.startsWith(this.baseUrl)) {
+            if (this.baseUrls.some(base => fullUrl.startsWith(base))) {
                 links.add(fullUrl);
             }
         });
@@ -116,8 +116,12 @@ class SimpleWebCrawler {
 }
 
 (async () => {
-    const baseUrl = "https://coinkivu.com/";
-    const crawler = new SimpleWebCrawler(baseUrl);
+    const baseUrls = [
+        "https://elttec-africa.com/",
+        "https://www.kadea.academy/",
+        "https://goma-innovation.com/"
+    ];
+    const crawler = new SimpleWebCrawler(baseUrls);
     await crawler.init();
     await crawler.crawl();
     await crawler.client.close(); // Fermer la connexion MongoDB à la fin

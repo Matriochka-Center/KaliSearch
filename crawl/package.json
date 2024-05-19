@@ -15,7 +15,6 @@
     "axios": "^1.6.8",
     "cheerio": "1.0.0-rc.12",
     "mime-types": "^2.1.35",
-    "mongodb": "^6.6.2",
-    "yargs": "^17.5.1"
+    "mongodb": "^6.6.2"
   }
 }
